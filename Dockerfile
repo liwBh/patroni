@@ -16,6 +16,26 @@ ARG LANG
 
 ENV ETCDVERSION=3.3.13 CONFDVERSION=0.16.0
 
+# 1) Instala herramientas para añadir repositorios
+RUN set -ex \
+  && apt-get update \
+  && apt-get install -y --no-install-recommends wget ca-certificates gnupg lsb-release \
+  && rm -rf /var/lib/apt/lists/*
+
+# 2) Añade el repositorio oficial de PostgreSQL
+RUN echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" \
+      > /etc/apt/sources.list.d/pgdg.list \
+  && wget -qO- https://www.postgresql.org/media/keys/ACCC4CF8.asc \
+      | apt-key add - \
+  && apt-get update
+
+# 3) Ahora sí instala pgBackRest junto con el resto
+RUN apt-get install -y --no-install-recommends pgbackrest
+
+# 4) Limpia caches de instalación
+RUN rm -rf /var/lib/apt/lists/*
+
+
 RUN set -ex \
     && export DEBIAN_FRONTEND=noninteractive \
     && echo 'APT::Install-Recommends "0";\nAPT::Install-Suggests "0";' > /etc/apt/apt.conf.d/01norecommend \
@@ -25,7 +45,7 @@ RUN set -ex \
             | grep -Ev '^python3-(sphinx|etcd|consul|kazoo|kubernetes)' \
             | xargs apt-get install -y vim curl less jq locales haproxy sudo \
                             python3-etcd python3-kazoo python3-pip busybox \
-                            net-tools iputils-ping dumb-init --fix-missing pgbackrest \
+                            net-tools iputils-ping dumb-init --fix-missing \
 \
     # Cleanup all locales but en_US.UTF-8
     && find /usr/share/i18n/charmaps/ -type f ! -name UTF-8.gz -delete \
