@@ -44,6 +44,7 @@ RUN set -ex \
     && apt-cache depends patroni | sed -n -e 's/.*Depends: \(python3-.\+\)$/\1/p' \
             | grep -Ev '^python3-(sphinx|etcd|consul|kazoo|kubernetes)' \
             | xargs apt-get install -y vim curl less jq locales haproxy sudo \
+                            openssh-client \
                             python3-etcd python3-kazoo python3-pip busybox \
                             net-tools iputils-ping dumb-init --fix-missing \
 \
@@ -148,7 +149,7 @@ RUN if [ "$COMPRESS" = "true" ]; then \
     else \
         /bin/busybox --install -s; \
     fi
-    
+
 USER root
 
 # directorios de lock y log de pgBackRest
@@ -200,5 +201,6 @@ RUN sed -i 's/env python/&3/' /patroni*.py \
     && chown -R postgres:postgres "$PGHOME" /run /etc/haproxy
 
 USER postgres
+
 
 ENTRYPOINT ["/bin/sh", "/entrypoint.sh"]
