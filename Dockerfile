@@ -148,6 +148,15 @@ RUN if [ "$COMPRESS" = "true" ]; then \
     else \
         /bin/busybox --install -s; \
     fi
+    
+USER root
+
+# directorios de lock y log de pgBackRest
+RUN mkdir -p /tmp/pgbackrest /var/log/pgbackrest \
+    && chown -R postgres:postgres /tmp/pgbackrest /var/log/pgbackrest
+
+USER postgres
+
 
 FROM scratch
 COPY --from=builder / /
@@ -189,12 +198,6 @@ RUN sed -i 's/env python/&3/' /patroni*.py \
     && if [ "$COMPRESS" = "true" ]; then chmod u+s /usr/bin/sudo; fi \
     && chmod +s /bin/ping \
     && chown -R postgres:postgres "$PGHOME" /run /etc/haproxy
-
-USER root
-
-# directorios de lock y log de pgBackRest
-RUN mkdir -p /tmp/pgbackrest /var/log/pgbackrest \
- && chown -R postgres:postgres /tmp/pgbackrest /var/log/pgbackrest
 
 USER postgres
 
